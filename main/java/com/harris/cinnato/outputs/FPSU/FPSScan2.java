@@ -1,0 +1,59 @@
+/*
+ * Copyright (c) 2021 L3Harris Technologies
+ */
+package com.harris.cinnato.outputs;
+
+import com.typesafe.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+/**
+ * Outputs each message to a separate file located in `./log/`.
+ * The files are named using the current millisecond with the `.xml` extension:
+ * ./log/1548108867040.xml
+ * ./log/1548108881503.xml
+ */
+public class FPSScan2 extends Output {
+    private static final Logger logger = LoggerFactory.getLogger(MessageFileOutput.class);
+    private final File outputDirectory;
+
+    /**
+     * Calls superclass constructor on Config parameter, as well set the output directory to the `./log/` directory.
+     *
+     * @param config the consumer config properties
+     */
+    public FPSScan2(Config config) {
+        super(config);
+        // TODO change the directory from config
+        outputDirectory = new File("./log/xml/");
+    }
+
+    /**
+     * Outputs each message to a separate file located in `./log/`.
+     * The files are named using the current millisecond with the `.xml` extension:
+     * ./log/1548108867040.xml
+     * ./log/1548108881503.xml
+     *
+     * @param message the incoming message.
+     */
+    @Override
+    public void output(String message, String header) {
+        String fileName = System.currentTimeMillis() + ".xml";
+        File file = new File(outputDirectory, fileName);
+        try (FileOutputStream stream = new FileOutputStream(file)) {
+            if (this.config.getBoolean("headers")) {
+                stream.write(this.convert(header).getBytes());
+            }
+            stream.write(this.convert(message).getBytes());
+        } catch (FileNotFoundException e) {
+            logger.error("File not found", e);
+        } catch (IOException e) {
+            logger.error("Failed to close the file", e);
+        }
+    }
+}
